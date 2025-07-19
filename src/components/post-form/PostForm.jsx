@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import appwriteService from "../../appwrite/config";
-import { Button, Input, RTE } from "../index";
+import { Button, Input, RTE, Select } from "../index";
 
 function PostForm({ post }) {
 	const { register, handleSubmit, watch, setValue, control, getValues } =
@@ -23,10 +23,10 @@ function PostForm({ post }) {
 		if (post) {
 			// update existing post
 			const file = data.image[0]
-				? appwriteService.uploadFile(data.image[0])
-				: null; //the variable file is promise or null
+				? await appwriteService.uploadFile(data.image[0])
+				: null;
 			if (file) {
-				appwriteService.deleteFile(post.featuredImage);
+				await appwriteService.deleteFile(post.featuredImage);
 			}
 			const dbPost = await appwriteService.updatePost(post.$id, {
 				...data,
@@ -37,7 +37,6 @@ function PostForm({ post }) {
 			}
 		} else {
 			// create new post
-			// Todo: check if the file exists (hints: see the update section)
 			const file = await appwriteService.uploadFile(data.image[0]);
 			if (file) {
 				const fileId = file.$id;
@@ -78,8 +77,11 @@ function PostForm({ post }) {
 	}, [watch, slugTransform, setValue]);
 
 	return (
-		<form onSubmit={handleSubmit(submit)} className="flex flex-wrap">
-			<div className="w-2/3 px-2">
+		<form
+			onSubmit={handleSubmit(submit)}
+			className="flex flex-wrap gap-4 max-w-7xl mx-auto"
+		>
+			<div className="w-full md:w-2/3 px-2">
 				<Input
 					label="Title :"
 					placeholder="Title"
@@ -104,7 +106,7 @@ function PostForm({ post }) {
 					defaultValue={getValues("content")}
 				/>
 			</div>
-			<div className="w-1/3 px-2">
+			<div className="w-full md:w-1/3 px-2">
 				<Input
 					label="Featured Image :"
 					type="file"
