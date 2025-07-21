@@ -1,16 +1,16 @@
-import { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { Button, Input, RTE, Select } from "..";
 import appwriteService from "../../appwrite/config";
-import { Button, Input, RTE, Select } from "../index";
 
-function PostForm({ post }) {
+export default function PostForm({ post }) {
 	const { register, handleSubmit, watch, setValue, control, getValues } =
 		useForm({
 			defaultValues: {
 				title: post?.title || "",
-				slug: post?.slug || "",
+				slug: post?.$id || "",
 				content: post?.content || "",
 				status: post?.status || "active",
 			},
@@ -21,23 +21,25 @@ function PostForm({ post }) {
 
 	const submit = async (data) => {
 		if (post) {
-			// update existing post
 			const file = data.image[0]
 				? await appwriteService.uploadFile(data.image[0])
 				: null;
+
 			if (file) {
-				await appwriteService.deleteFile(post.featuredImage);
+				appwriteService.deleteFile(post.featuredImage);
 			}
+
 			const dbPost = await appwriteService.updatePost(post.$id, {
 				...data,
 				featuredImage: file ? file.$id : undefined,
 			});
+
 			if (dbPost) {
 				navigate(`/post/${dbPost.$id}`);
 			}
 		} else {
-			// create new post
 			const file = await appwriteService.uploadFile(data.image[0]);
+
 			if (file) {
 				const fileId = file.$id;
 				data.featuredImage = fileId;
@@ -45,6 +47,7 @@ function PostForm({ post }) {
 					...data,
 					userId: userData.$id,
 				});
+
 				if (dbPost) {
 					navigate(`/post/${dbPost.$id}`);
 				}
@@ -53,23 +56,22 @@ function PostForm({ post }) {
 	};
 
 	const slugTransform = useCallback((value) => {
-		if (value && typeof value === "string") {
+		if (value && typeof value === "string")
 			return value
 				.trim()
 				.toLowerCase()
-				.replace(/[^a-z0-9]+/g, "-")
-				.replace(/^-|-$/g, "");
-		}
+				.replace(/[^a-zA-Z\d\s]+/g, "-")
+				.replace(/\s/g, "-");
+
 		return "";
 	}, []);
 
-	useEffect(() => {
+	React.useEffect(() => {
 		const subscription = watch((value, { name }) => {
 			if (name === "title") {
-				setValue(
-					"slug",
-					slugTransform(value.title, { shouldValidate: true })
-				);
+				setValue("slug", slugTransform(value.title), {
+					shouldValidate: true,
+				});
 			}
 		});
 
@@ -77,11 +79,8 @@ function PostForm({ post }) {
 	}, [watch, slugTransform, setValue]);
 
 	return (
-		<form
-			onSubmit={handleSubmit(submit)}
-			className="flex flex-wrap gap-4 max-w-7xl mx-auto"
-		>
-			<div className="w-full md:w-2/3 px-2">
+		<form onSubmit={handleSubmit(submit)} className="flex flex-wrap">
+			<div className="w-2/3 px-2">
 				<Input
 					label="Title :"
 					placeholder="Title"
@@ -106,7 +105,7 @@ function PostForm({ post }) {
 					defaultValue={getValues("content")}
 				/>
 			</div>
-			<div className="w-full md:w-1/3 px-2">
+			<div className="w-1/3 px-2">
 				<Input
 					label="Featured Image :"
 					type="file"
@@ -142,5 +141,3 @@ function PostForm({ post }) {
 		</form>
 	);
 }
-
-export default PostForm;

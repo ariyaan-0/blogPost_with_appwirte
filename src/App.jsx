@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { Outlet } from "react-router-dom";
 import "./App.css";
 import authService from "./appwrite/auth";
-import { Footer, Header } from "./components";
+import { Header } from "./components";
 import { login, logout } from "./store/authSlice";
 
 function App() {
@@ -34,7 +34,7 @@ function App() {
 				<main>
 					<Outlet />
 				</main>
-				<Footer />
+				{/* <Footer /> */}
 			</div>
 		</div>
 	) : null;
